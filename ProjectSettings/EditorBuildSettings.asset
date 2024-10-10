@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/Menu.unity
+    guid: 44fe05a9b51e85245b8e8249d6779813
+  - enabled: 1
+    path: Assets/Scenes/Lobby.unity
+    guid: 3f5cb95a9c7a3e94cab878fc12f40123
+  - enabled: 1
+    path: Assets/Scenes/Waves.unity
+    guid: 25cc86f7fa40fda479dc7561aaad8910
+  m_configObjects:
+    com.unity.input.settings: {fileID: 11400000, guid: 4be36a642121c7246986a1453bdbd70a, type: 2}
