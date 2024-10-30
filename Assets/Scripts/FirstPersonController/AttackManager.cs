@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace FirstPersonController
 {
+    
     public class AttackManager : MonoBehaviour
     {
         
