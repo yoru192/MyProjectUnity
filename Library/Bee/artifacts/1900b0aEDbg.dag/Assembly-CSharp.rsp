@@ -388,6 +388,7 @@
 "Assets/Scripts/Inventory/InventoryManager.cs"
 "Assets/Scripts/Inventory/InventorySlot.cs"
 "Assets/Scripts/Inventory/Item.cs"
+"Assets/Scripts/MainMenu/MainMenu.cs"
 "Assets/Scripts/MarketManager.cs"
 "Assets/Scripts/MenuManager.cs"
 "Assets/Scripts/NavigationScript.cs"

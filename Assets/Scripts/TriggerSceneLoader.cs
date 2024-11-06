@@ -13,6 +13,9 @@ public class TriggerSceneLoader : MonoBehaviour
         // Перевіряємо, чи це гравець (або інший об'єкт)
         if (other.CompareTag("Player"))
         {
+            // Спершу зберігаємо поточний стан гри
+            DataPersistenceManager.instance.SaveGame();
+            
             // Запускаємо асинхронне завантаження сцени
             StartCoroutine(LoadSceneAsync(sceneToLoad));
         }

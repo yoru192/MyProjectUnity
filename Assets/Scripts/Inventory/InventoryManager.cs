@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
-public class InventoryManager : MonoBehaviour
+public class InventoryManager : MonoBehaviour, IDataPersistence
 {
     [SerializeField] private GameObject[] objectsInHand;
     [SerializeField] private GameObject hand;
@@ -10,11 +11,61 @@ public class InventoryManager : MonoBehaviour
     public int maxStackedItems = 4;
     public InventorySlot[] inventorySlots;
     public GameObject inventoryItemPrefab;
-
-    private int _selectedSlot = -1;
-    private readonly Dictionary<ItemType, GameObject> _itemSetActive = new Dictionary<ItemType, GameObject>();
+    [NonSerialized] public InventoryItem inventoryItemInSlot;
+    private InventoryItem _inventoryItem;
     
+    private int _selectedSlot = -1;
+    private Dictionary<ItemType, GameObject> _itemSetActive = new Dictionary<ItemType, GameObject>();
+    private bool _itemInSlotActive;
+    public event Action ItemActiveChanged;
+    
+    public void SaveData(GameData data)
+    {
+        data.DataInventoryItems.Clear();
+    
+        for (int i = 0; i < inventorySlots.Length; i++)
+        {
+            var slot = inventorySlots[i];
+            InventoryItem itemInSlot = slot.GetComponentInChildren<InventoryItem>();
+            if (itemInSlot != null)
+            {
+                data.DataInventoryItems.Add(new ItemData 
+                { 
+                    item = itemInSlot.item, 
+                    count = itemInSlot.count, 
+                    selectedSlot = i
+                });
+            }
+        }
+    }
 
+    public void LoadData(GameData data)
+    {
+        foreach (var slot in inventorySlots)
+        {
+            InventoryItem existingItem = slot.GetComponentInChildren<InventoryItem>();
+            if (existingItem != null)
+            {
+                Destroy(existingItem.gameObject);
+            }
+        }
+
+        foreach (var itemData in data.DataInventoryItems)
+        {
+            if (itemData.selectedSlot >= 0 && itemData.selectedSlot < inventorySlots.Length)
+            {
+                InventorySlot targetSlot = inventorySlots[itemData.selectedSlot];
+                SpawnNewItem(itemData.item, targetSlot);
+                InventoryItem newItem = targetSlot.GetComponentInChildren<InventoryItem>();
+                newItem.count = itemData.count;
+                newItem.RefreshCount();
+            }
+        }
+    }
+
+
+
+    
     private void Start()
     {
         ChangeSelectedSlot(0);
@@ -38,11 +89,15 @@ public class InventoryManager : MonoBehaviour
 
     void ChangeSelectedSlot(int newValue)
     {
+        if (newValue < 0 || newValue >= inventorySlots.Length)
+        {
+            Debug.LogWarning("Selected slot index is out of bounds");
+            return;
+        }
         if (_selectedSlot >= 0)
         {
             inventorySlots[_selectedSlot].Deselect();
         }
-
         inventorySlots[newValue].Select();
         _selectedSlot = newValue;
         NewItemSelected();
@@ -52,28 +107,29 @@ public class InventoryManager : MonoBehaviour
     {
         foreach (var slot in inventorySlots)
         {
-            InventoryItem itemInSlot = slot.GetComponentInChildren<InventoryItem>();
-            if (itemInSlot != null &&
-                itemInSlot.item == item &&
-                itemInSlot.count < maxStackedItems &&
-                itemInSlot.item.stackable)
+            inventoryItemInSlot = slot.GetComponentInChildren<InventoryItem>();
+            if (inventoryItemInSlot != null &&
+                inventoryItemInSlot.item == item &&
+                inventoryItemInSlot.count < maxStackedItems &&
+                inventoryItemInSlot.item.stackable)
             {
-                itemInSlot.count++;
-                itemInSlot.RefreshCount();
+                inventoryItemInSlot.count++;
+                inventoryItemInSlot.RefreshCount();
             
                 // Оновлюємо предмет в руці, якщо доданий предмет знаходиться в вибраному слоті
                 if (slot == inventorySlots[_selectedSlot])
                 {
                     NewItemSelected();
                 }
+                ItemActiveChanged?.Invoke();
                 return true;
             }
         }
 
         foreach (var slot in inventorySlots)
         {
-            InventoryItem itemInSlot = slot.GetComponentInChildren<InventoryItem>();
-            if (itemInSlot == null)
+            inventoryItemInSlot = slot.GetComponentInChildren<InventoryItem>();
+            if (inventoryItemInSlot == null)
             {
                 SpawnNewItem(item, slot);
             
@@ -82,6 +138,7 @@ public class InventoryManager : MonoBehaviour
                 {
                     NewItemSelected();
                 }
+                ItemActiveChanged?.Invoke();
                 return true;
             }
         }
@@ -92,17 +149,20 @@ public class InventoryManager : MonoBehaviour
     private void SpawnNewItem(Item item, InventorySlot slot)
     {
         GameObject newItemGo = Instantiate(inventoryItemPrefab, slot.transform);
-        InventoryItem inventoryItem = newItemGo.GetComponent<InventoryItem>();
-        inventoryItem.InitialiseItem(item);
+        inventoryItemInSlot = newItemGo.GetComponent<InventoryItem>();
+        inventoryItemInSlot.InitialiseItem(item);
+        ItemActiveChanged?.Invoke();
     }
 
     private void ActivateObject(InventoryItem inventoryItem)
     {
         if (!_itemSetActive.TryGetValue(inventoryItem.item.type, out GameObject activeItem)) return;
         Transform handTransform = hand.transform;
+        _itemInSlotActive = true;
         activeItem.transform.SetParent(handTransform);
         activeItem.transform.localPosition = Vector3.zero;
-        activeItem.SetActive(true);
+        activeItem.SetActive(_itemInSlotActive);
+        ItemActiveChanged?.Invoke();
     }
 
     public Item GetSelectedItem(bool use)
@@ -127,9 +187,11 @@ public class InventoryManager : MonoBehaviour
     private void NewItemSelected()
     {
         if (_selectedSlot < 0 || _selectedSlot >= inventorySlots.Length) return;
-        foreach (var item in _itemSetActive.Values)
+        foreach (GameObject item in _itemSetActive.Values)
         {
-            item.SetActive(false);
+            _itemInSlotActive = false;
+            item.SetActive(_itemInSlotActive);
+            ItemActiveChanged?.Invoke();
         }
 
         InventorySlot slot = inventorySlots[_selectedSlot];

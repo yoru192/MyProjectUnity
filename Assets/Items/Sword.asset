@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 622c6b347b68e8d4eb2f1c70d11ca934, type: 3}
   m_Name: Sword
   m_EditorClassIdentifier: 
+  ItemId: 
   cooldown: 2
-  tile: {fileID: 0}
   type: 2
   actionType: 2
   range: {x: 5, y: 4}

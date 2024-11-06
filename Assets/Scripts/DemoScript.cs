@@ -5,14 +5,12 @@ public class DemoScript : MonoBehaviour
 {
     public InventoryManager inventoryManager;
     public Item[] itemsToPickup;
-
-    public event Action PickupedItem;
+    
     
     public void PickupItem(int id)
     {
         bool result = inventoryManager.AddItem(itemsToPickup[id]);
         Debug.Log(result ? "Item added" : "Item not added");
-        PickupedItem?.Invoke();
     }
 
     public void GetSelectedItem()
