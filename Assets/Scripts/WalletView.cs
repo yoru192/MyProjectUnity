@@ -7,30 +7,35 @@ public class WalletView : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _amountView;
     [SerializeField] private Wallet _wallet;
-    [SerializeField] private Enemy _enemy;
 
     private void OnEnable()
     {
         _wallet.AmountChanged += DisplayAmount;
-        _enemy.Died += AddAmount;
+
+        // Підписуємося на подію смерті ворогів
+        Enemy.AnyEnemyDied += AddAmount;
     }
 
     private void OnDisable()
     {
         _wallet.AmountChanged -= DisplayAmount;
-        //_enemy.Died -= AddAmount;
+
+        // Відписуємося від події смерті ворогів
+        Enemy.AnyEnemyDied -= AddAmount;
     }
-    
+
     public void DisplayAmount()
     {
         float amount = _wallet.Money;
         _amountView.text = amount.ToString(CultureInfo.InvariantCulture);
     }
 
-    public void AddAmount()
+    private void AddAmount(int amount)
     {
-
-        _wallet.AddMoney(_enemy.maxHealth);
+        // Додаємо кількість грошей, яка відповідає здоров'ю ворога
+        _wallet.AddMoney(amount);
         DisplayAmount();
     }
 }
+
+

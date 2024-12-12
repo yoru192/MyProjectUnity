@@ -17,7 +17,7 @@ public class InventoryManager : MonoBehaviour, IDataPersistence
     private int _selectedSlot = -1;
     private Dictionary<ItemType, GameObject> _itemSetActive = new Dictionary<ItemType, GameObject>();
     private bool _itemInSlotActive;
-    public event Action ItemActiveChanged;
+
     
     public void SaveData(GameData data)
     {
@@ -27,7 +27,7 @@ public class InventoryManager : MonoBehaviour, IDataPersistence
         {
             var slot = inventorySlots[i];
             InventoryItem itemInSlot = slot.GetComponentInChildren<InventoryItem>();
-            if (itemInSlot != null)
+            if (itemInSlot is not null)
             {
                 data.DataInventoryItems.Add(new ItemData 
                 { 
@@ -103,6 +103,19 @@ public class InventoryManager : MonoBehaviour, IDataPersistence
         NewItemSelected();
     }
 
+    void OnDestroy()
+    {
+        // Очищення посилань на знищені слоти
+        for (int i = 0; i < inventorySlots.Length; i++)
+        {
+            if (inventorySlots[i] != null)
+            {
+                Destroy(inventorySlots[i].gameObject); // Видаляємо об'єкти
+                inventorySlots[i] = null;             // Очищаємо посилання
+            }
+        }
+    }
+    
     public bool AddItem(Item item)
     {
         foreach (var slot in inventorySlots)
@@ -121,7 +134,6 @@ public class InventoryManager : MonoBehaviour, IDataPersistence
                 {
                     NewItemSelected();
                 }
-                ItemActiveChanged?.Invoke();
                 return true;
             }
         }
@@ -138,7 +150,6 @@ public class InventoryManager : MonoBehaviour, IDataPersistence
                 {
                     NewItemSelected();
                 }
-                ItemActiveChanged?.Invoke();
                 return true;
             }
         }
@@ -151,18 +162,16 @@ public class InventoryManager : MonoBehaviour, IDataPersistence
         GameObject newItemGo = Instantiate(inventoryItemPrefab, slot.transform);
         inventoryItemInSlot = newItemGo.GetComponent<InventoryItem>();
         inventoryItemInSlot.InitialiseItem(item);
-        ItemActiveChanged?.Invoke();
     }
 
     private void ActivateObject(InventoryItem inventoryItem)
     {
-        if (!_itemSetActive.TryGetValue(inventoryItem.item.type, out GameObject activeItem)) return;
+        if (!_itemSetActive.TryGetValue(inventoryItem.item.itemType, out GameObject activeItem)) return;
         Transform handTransform = hand.transform;
         _itemInSlotActive = true;
         activeItem.transform.SetParent(handTransform);
         activeItem.transform.localPosition = Vector3.zero;
         activeItem.SetActive(_itemInSlotActive);
-        ItemActiveChanged?.Invoke();
     }
 
     public Item GetSelectedItem(bool use)
@@ -191,7 +200,6 @@ public class InventoryManager : MonoBehaviour, IDataPersistence
         {
             _itemInSlotActive = false;
             item.SetActive(_itemInSlotActive);
-            ItemActiveChanged?.Invoke();
         }
 
         InventorySlot slot = inventorySlots[_selectedSlot];

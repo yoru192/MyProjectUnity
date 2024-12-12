@@ -36,8 +36,14 @@ public class Wallet : MonoBehaviour, IDataPersistence
         if (isEnough)
         {
             Money -= amount;
+            AmountChanged?.Invoke();
         }
 
         return isEnough;
+    }
+
+    public void NotifyAmountChanged()
+    {
+        AmountChanged?.Invoke();
     }
 }

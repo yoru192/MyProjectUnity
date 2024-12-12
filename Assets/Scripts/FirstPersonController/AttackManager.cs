@@ -1,3 +1,4 @@
+using System;
 using FirstPersonController.Components;
 using UnityEngine;
 
@@ -17,12 +18,14 @@ namespace FirstPersonController
         public float attackDistance = 3f;
         public float attackDelay = 0.4f;
         public float attackSpeed = 1f;
-        public int attackDamage = 1;
+        [NonSerialized] public int attackDamage = 1;
         public LayerMask attackLayer;
         
         private bool _attacking;
         private bool _readyToAttack = true;
         private int _attackCount;
+        
+        private InventoryManager _inventoryManager;
 
         private Camera _cam;
         
@@ -36,6 +39,8 @@ namespace FirstPersonController
         public const string Attack2 = "Attack 2";
         
         private string _currentAnimationState;
+        
+        
 
 
         void Awake()
@@ -45,13 +50,32 @@ namespace FirstPersonController
             _rigidbody = GetComponent<Rigidbody>();
             _playerInput = new PlayerInput();
             _input = _playerInput.Main;
+            _inventoryManager = FindObjectOfType<InventoryManager>();
             AssignInputs();
         }
         
         void Update()
         {
+            UpdateAttackDamage();
             _playerVelocity = _rigidbody.velocity;
             SetAnimations();
+        }
+        
+        private void UpdateAttackDamage()
+        {
+            // Отримуємо вибраний предмет з InventoryManager
+            var selectedItem = _inventoryManager.GetSelectedItem(false);
+
+            // Якщо вибраний предмет існує та він є зброєю, беремо його damage
+            if (selectedItem != null && selectedItem.itemType == ItemType.Weapon)
+            {
+                attackDamage = selectedItem.damage;
+            }
+            else
+            {
+                // Якщо вибраний предмет не зброя, значення damage за замовчуванням
+                attackDamage = 1;
+            }
         }
         
         void OnEnable() 

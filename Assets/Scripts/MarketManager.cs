@@ -24,7 +24,7 @@ public class MarketManager : MonoBehaviour
     
     public void ClosePanel()
     {
-        marketPanel.SetActive(false);  // Вимкнути панель
+        marketPanel.SetActive(false);  
         _controlCursor.LockCursor();
         _controlCursor.AllowPlayerMovement();
     }
